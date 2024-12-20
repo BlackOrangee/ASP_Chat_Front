@@ -1,47 +1,102 @@
-import React from 'react'
-import { BsCheck2 } from "react-icons/bs";
-import { BsCheck2All } from "react-icons/bs";
+import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
+import { Formik, Form, Field } from 'formik';
+import { sendMessage, fetchMessages } from '../api';
+import { message as antdMessage } from 'antd';
+import Message from './Message';
 
-export default function ChatArea() {
+export default function ChatArea({ chatId, setChatId }) {
+    const token = localStorage.getItem('token');
+    const [lastMessageId, setLastMessageId] = useState(localStorage.getItem('lastMessageId'));
+    const [messagesArray, setMessages] = useState([]);
+
+    ChatArea.propTypes = {
+        chatId: PropTypes.number.isRequired,
+        setChatId: PropTypes.func.isRequired,
+    };
+
+    const fetchMessagesAsync = async (lastMessageId = null) => {
+        if (!chatId || !token) {
+            return;
+        }
+    
+        try {
+            const response = await fetchMessages(chatId, lastMessageId, token);
+            if (response.length >= 0) {
+                setMessages([...messagesArray, ...response]);
+            }
+        } catch (error) {
+            antdMessage.message?.error('Error fetching messages:', error);
+        }
+    };
+
+    useEffect(() => {
+        fetchMessagesAsync(lastMessageId);
+    }, [chatId, lastMessageId]);
+
+    const handleFormSubmit = async (values, { resetForm }) => {
+        console.log("Form values:", values);
+
+        if (!chatId || !values.text) {
+            antdMessage.error('Chat ID or message text is missing.');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('ChatId', chatId);
+        // formData.append('ReplyMessageId', null);
+        formData.append('Text', values.text);
+
+        if (values.file) {
+            formData.append('File', values.file);
+        }
+
+        console.log("FormData before send:", Array.from(formData.entries()));
+
+        try {
+            const response = await sendMessage(formData, token);
+            console.log("API Response:", response);
+            setMessages((prevMessages) => [...prevMessages, response]);
+            resetForm();
+        } catch (error) {
+            console.error("Error sending message:", error);
+            antdMessage.error('Error sending message: ' + error.message);
+        }
+    };
+
+
     return (
         <div className="col-6 chat-messages">
             <div className="messages custom-scrollbar">
-
-                <div className="bg-light p-2 rounded mb-2" style={{ width: 'fit-content' }}>
-                    <div className="d-flex align-items-center">
-                        <div className='d-flex flex-column' style={{ marginRight: '16px' }}>
-                            <p className='mb-0'>Hello! How are you?</p>
-                            <p className='text-muted mb-0' style={{ fontSize: '13px' }}>edited</p>
-                        </div>
-                        <div className='d-flex flex-column align-items-end justify-content-between pl-2'>
-                            <p className='mb-0 pl-2 text-muted' style={{ fontSize: '13px' }}>12:00</p>
-                            <BsCheck2 />
-                            {/* <BsCheck2All /> */}
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-primary text-white p-2 rounded mb-2" style={{ width: 'fit-content', marginLeft: 'auto' }}>
-                    <div className="d-flex align-items-center justify-content-end">
-                        <div className="d-flex flex-column" style={{ marginRight: '16px' }}>
-                            <p className="mb-0">Hi! I'm doing great, thanks!</p>
-                            <p className='text-light mb-0' style={{ fontSize: '13px' }}>edited</p>
-                        </div>
-                        <div className="d-flex flex-column align-items-end justify-content-between pl-2">
-                            <p className="mb-0 text-light" style={{ fontSize: '13px' }}>12:01</p>
-                            {/* <BsCheck2 /> */}
-                            <BsCheck2All />
-                        </div>
-                    </div>
-                </div>
-                
+                {messagesArray.map((message) => (
+                    <Message key={message.id * 5 % 3} message={message} />
+                )) ?? Array.isArray(messagesArray)}
             </div>
-            <div className="message-input">
-                <div className="input-group">
-                    <input type="text" className="form-control" placeholder="Type a message..." />
-                    <button className="btn btn-primary">Send</button>
-                </div>
-            </div>
+
+            <Formik
+                initialValues={{ text: '', file: null }}
+                onSubmit={handleFormSubmit}
+            >
+                {({ setFieldValue }) => (
+                    <Form>
+                        <Field
+                            name="text"
+                            type="text"
+                            placeholder="Type your message..."
+                            style={{ width: '100%', height: '150%', resize: 'none' }}
+                        />
+                        <input
+                            type="file"
+                            name="file"
+                            onChange={(event) => {
+                                setFieldValue('file', event.currentTarget.files[0]);
+                            }}
+                        />
+                        <button type="submit">Send</button>
+                    </Form>
+                )}
+            </Formik>
+
         </div>
-    )
+    );
 }

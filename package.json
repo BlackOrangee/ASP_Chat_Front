@@ -8,7 +8,9 @@
     "@testing-library/user-event": "^13.5.0",
     "antd": "^5.21.2",
     "bootstrap": "^5.3.3",
+    "cors": "^2.8.5",
     "formik": "^2.4.6",
+    "prop-types": "^15.8.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-icons": "^5.4.0",
@@ -25,7 +27,7 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
-  "proxy": "http://34.116.253.154",
+  "proxy": "http://localhost:5005",
   "eslintConfig": {
     "extends": [
       "react-app",

@@ -1,15 +1,37 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import '../Styles/Body.scss'
 import Sidebar from '../Sidebar/Sidebar'
 import ChatArea from './ChatArea'
 import ChatDetails from './ChatDetails'
+import Auth from '../Auth/Auth'
 
 export default function Body() {
+    const [isAuthorized, setIsAuthorized] = useState(false);
+    const [chatId, setChatId] = useState(1);
+
+    useEffect(() => {
+
+        const token = localStorage.getItem('token');
+        if (token) {
+            setIsAuthorized(true);
+        }
+    }, []);
+
+    const handleAuthSuccess = () => {
+        setIsAuthorized(true);
+    };
+
     return (
-        <div className="container-fluid chat-container">
-            <Sidebar />
-            <ChatArea />
-            <ChatDetails />
-        </div>
+        <>
+            {isAuthorized ?
+                <div className="container-fluid chat-container">
+                    <Sidebar setChatId={setChatId}/>
+                    <ChatArea chatId={chatId} setChatId={setChatId}/>
+                    <ChatDetails chatId={chatId} setChatId={setChatId}/>
+                </div>
+                :
+                <Auth onAuthSuccess={handleAuthSuccess}/>
+            }
+        </>
     )
 }
