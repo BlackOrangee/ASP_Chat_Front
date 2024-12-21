@@ -7,7 +7,8 @@ import Auth from '../Auth/Auth'
 
 export default function Body() {
     const [isAuthorized, setIsAuthorized] = useState(false);
-    const [chatId, setChatId] = useState(1);
+    const lastSelectedContact = localStorage.getItem('lastSelectedContact');
+    const [chatId, setChatId] = useState(parseInt(lastSelectedContact));
 
     useEffect(() => {
 

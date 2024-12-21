@@ -118,6 +118,10 @@ const ContactInfo = ({ contact, setChatId }) => {
     }, [contact.type]);
 
     const SelectContact = () => {
+        if (!contactId) {
+            return;
+        }
+        localStorage.setItem('lastSelectedContact', contactId);
         setChatId(contactId);
     }
 

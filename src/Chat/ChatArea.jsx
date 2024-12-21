@@ -23,7 +23,11 @@ export default function ChatArea({ chatId, setChatId }) {
         try {
             const response = await fetchMessages(chatId, lastMessageId, token);
             if (response.length >= 0) {
-                setMessages([...messagesArray, ...response]);
+                setMessages([]);
+                setMessages([...response]);
+            }
+            else {
+                setMessages([]);
             }
         } catch (error) {
             antdMessage.message?.error('Error fetching messages:', error);
@@ -69,8 +73,8 @@ export default function ChatArea({ chatId, setChatId }) {
         <div className="col-6 chat-messages">
             <div className="messages custom-scrollbar">
                 {messagesArray.map((message) => (
-                    <Message key={message.id * 5 % 3} message={message} />
-                )) ?? Array.isArray(messagesArray)}
+                    <Message key={message.id + Date.now()} message={message} chatId={chatId} />
+                ))}
             </div>
 
             <Formik

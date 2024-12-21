@@ -26,10 +26,15 @@ const ChatDetails = ({ chatId, setChatId }) => {
         }
 
         if (chat.type?.name === 'P2P') {
+            // console.log('users: {users}', chat.users);
             const user = chat.users.filter(user => user.id != userId);
-            setTag(user[0].username);
+            const username = user[0].username;
+            setTag(username);
+            console.log('tag: ', tag);
+            console.log('username: ', username);
             setChatType('P2P');
         } else {
+            setChatType('NoP2P');
             setTag(chat.tag);
         }
     }, [chat]);
