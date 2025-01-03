@@ -4,16 +4,21 @@ import PropTypes from 'prop-types';
 
 const ChatDetails = ({ chatId, setChatId }) => {
     const token = localStorage.getItem('token');
-    const userId = localStorage.getItem('userId');
+    const userId = parseInt(localStorage.getItem('userId'));
     const [chat, setChat] = useState(null);
     const [imageUrl, setImageUrl] = useState(null);
-    const [chatDescription, setChatDescription] = useState(null);
-    const [chatName, setChatName] = useState(null);
     const [chatImageId, setChatImageId] = useState(null);
     const [chatImage, setChatImage] = useState(null);
     const [chatOrAponentId, setChatOrAponentId] = useState(null);
-    const [tag, setTag] = useState(null);
-    const [chatType, setChatType] = useState(null);
+    const [chatObject, setChatObject] = useState(
+        {
+            name: null,
+            description: null,
+            image: null,
+            type: null,
+            tag: null,
+            username: null
+        });
 
     ChatDetails.propTypes = {
         chatId: PropTypes.number.isRequired,
@@ -26,36 +31,59 @@ const ChatDetails = ({ chatId, setChatId }) => {
         }
 
         if (chat.type?.name === 'P2P') {
-            // console.log('users: {users}', chat.users);
-            const user = chat.users.filter(user => user.id != userId);
-            const username = user[0].username;
-            setTag(username);
-            console.log('tag: ', tag);
-            console.log('username: ', username);
-            setChatType('P2P');
-        } else {
-            setChatType('NoP2P');
-            setTag(chat.tag);
+            const user = chat.users.filter(user => user.id !== userId);
+            const usernameTemp = user[0].username;
+            setChatObject({
+                name: user[0].name,
+                description: user[0].description || '',
+                type: 'P2P',
+                tag: null,
+                username: usernameTemp
+            });
+            setChatOrAponentId(user[0].id);
+            setChatImageId(user[0].image?.id);
+        } else if (chat.type?.name === 'Group') {
+            setChatObject({
+                name: chat.name,
+                description: chat.description,
+                type: 'Group',
+                tag: null,
+                username: null
+            });
+            setChatImageId(chat.image?.id);
+            setChatOrAponentId(chat.id);
         }
-    }, [chat]);
+        else {
+            setChatObject({
+                name: chat.name,
+                description: chat.description,
+                type: 'Channel',
+                users: [chatOrAponentId],
+                tag: chat.tag,
+                username: null
+            });
+            setChatImageId(chat.image?.id);
+            setChatOrAponentId(chat.id);
+        }
+    }, [chat, userId, chatOrAponentId]);
 
-    const fetchChat = async () => {
-        if (!chatId || !token) { 
+    const fetchChat = useCallback(async (chatIdParam, tokenParam) => {
+        if (!chatIdParam || !tokenParam) {
             return;
         }
 
         try {
-            const response = await fetchChatById(chatId, token);
+            const response = await fetchChatById(chatIdParam, tokenParam);
             setChat(response);
         } catch (error) {
             console.error('Error fetching chat details:', error);
         }
-    };
+    }, []);
 
     useEffect(() => {
-        fetchChat();
+        fetchChat(chatId, token);
         setChatImage(null);
-    }, [chatId]);
+    }, [chatId, fetchChat, token]);
 
     const fetchMediaLinkc = useCallback(async (chatImageId) => {
         if (!chatImageId || !token) {
@@ -68,60 +96,18 @@ const ChatDetails = ({ chatId, setChatId }) => {
         } catch (error) {
             console.error('Error fetching profile image:', error);
         }
-    }, [chatImageId]);
+    }, [token]);
+
 
     useEffect(() => {
-        if (!chat) {
-            return;
+        if (chatImageId) {
+            fetchMediaLinkc(chatImageId);
         }
-
-        if (chat.type?.name === 'P2P') {
-            const user = chat.users.filter(user => user.id != userId);
-            setChatDescription(user[0].description || '');
-        } else {
-            setChatDescription(chat.description);
-        }
-
-    }, [chat]);
-
-    useEffect(() => {
-        if (!chat) {
-            return;
-        }
-
-        if (chat.type?.name === 'P2P') {
-            const user = chat.users.filter(user => user.id != userId);
-            setChatImageId(user[0].image?.id);
-            setChatOrAponentId(user[0].id);
-        } else {
-            setChatImageId(chat.image?.id);
-            setChatOrAponentId(chat.id);
-
-        }
-
-    }, [chat]);
-
-    useEffect(() => {
-        if (!chat) {
-            return;
-        }
-
-        if (chat.type?.name === 'P2P') {
-            const user = chat.users.filter(user => user.id != userId);
-            setChatName(user[0].name);
-        } else {
-            setChatName(chat.name);
-        }
-    }, [chat]);
-
-    useEffect(() => {
-        if (imageUrl) {
-            fetchMediaLinkc(imageUrl);
-        }
-    }, [imageUrl]);
+    }, [chatImageId, fetchMediaLinkc]);
 
     useEffect(() => {
         if (!chatImageId || !chatOrAponentId) {
+            setChatImage(null);
             return;
         }
 
@@ -130,7 +116,7 @@ const ChatDetails = ({ chatId, setChatId }) => {
             console.log('Image not found in local storage');
             return;
         }
-        
+
         if (base64Image.startsWith("data:application/octet-stream")) {
             setChatImage(base64Image.replace("data:application/octet-stream", "data:image/png"));
         }
@@ -139,37 +125,39 @@ const ChatDetails = ({ chatId, setChatId }) => {
         }
 
         setChatImage(base64Image);
-    }, [chatImageId, chatOrAponentId]);
-    
+    }, [chatImageId, chatOrAponentId, chatImage]);
+
     useEffect(() => {
         if (!chatOrAponentId || !imageUrl || !chatImageId) {
             return;
         }
 
-        if(!chatImage) {
+        if (!chatImage) {
             FetchAndStoreImage(imageUrl, chatOrAponentId, chatImageId);
         }
-    }, [imageUrl, chatOrAponentId, chatImageId]);
+    }, [imageUrl, chatOrAponentId, chatImageId, chatImage]);
 
     const defaultImageUrl = imageUrl || 'https://via.placeholder.com/60';
 
     return (
         <div className="col-3 chat-details">
             <div className="d-flex align-items-center p-3">
-                {(chatImage || defaultImageUrl)  &&  (
+                {(chatImage || defaultImageUrl) && (
                     <img
                         className="rounded-circle"
                         style={{ width: '60px', height: '60px' }}
-                        src={ chatImage?.startsWith("data:application/octet-stream") 
-                            ? chatImage.replace("data:application/octet-stream", "data:image/png") 
-                            : chatImage ||  defaultImageUrl}
+                        src={chatImage?.startsWith("data:application/octet-stream")
+                            ? chatImage.replace("data:application/octet-stream", "data:image/png")
+                            : chatImage || defaultImageUrl}
                         alt="User"
                     />
                 )}
-                <h5 className="p-3 border-bottom">{chatName}</h5>
+                <h5 className="p-3 border-bottom">{chatObject.name}</h5>
             </div>
-            {tag && <p className="p-3 border-bottom">{chatType === 'P2P' ? 'Username: ' : 'Tag: ' + tag}</p>}
-            <p className="p-3 border-bottom">{chatDescription}</p>
+            {chatObject.chatType && <p className="p-3 border-bottom">{chatObject.chatType}</p>}
+            {chatObject.tag && <p className="p-3 border-bottom">{'@' + chatObject.tag}</p>}
+            {chatObject.username && <p className="p-3 border-bottom">{'@' + chatObject.username}</p>}
+            <p className="p-3 border-bottom">{chatObject.description}</p>
         </div>
     );
 };

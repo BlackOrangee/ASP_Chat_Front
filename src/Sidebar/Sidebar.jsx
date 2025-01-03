@@ -1,9 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import UserInfo from './UserInfo';
+import UserInfo from './UserInfo/UserInfo.jsx';
 import ContactInfo from './ContactInfo';
 import { fetchUserChats } from '../api.js';
+import PropTypes from 'prop-types';
 
 export default function Sidebar({setChatId}) {
+    Sidebar.propTypes = {
+        setChatId: PropTypes.func
+    }
+    
     const token = localStorage.getItem('token');
     const [contacts, setContacts] = useState([]);
 

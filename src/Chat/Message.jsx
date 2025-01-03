@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { BsCheck2, BsCheck2All } from 'react-icons/bs';
 import PropTypes from 'prop-types';
+import { setReadedToMessage } from '../api';
 
 export default function Message({ message, chatId }) {
 
@@ -14,14 +15,15 @@ export default function Message({ message, chatId }) {
             isEdited: PropTypes.bool.isRequired,
             isReaded: PropTypes.bool.isRequired,
             media: PropTypes.oneOfType([
-                PropTypes.object, 
+                PropTypes.object,
                 PropTypes.array
             ]),
         }).isRequired,
         chatId: PropTypes.number.isRequired
     };
 
-    const userId = localStorage.getItem('userId');
+    const token = localStorage.getItem('token');
+    const userId = parseInt(localStorage.getItem('userId'));
     const [id, setId] = useState(message?.id);
     const [replyMessage, setReplyMessage] = useState(null);
     const [date, setDate] = useState(null);
@@ -36,8 +38,8 @@ export default function Message({ message, chatId }) {
             return;
         }
 
-        setIsSender(message.user.id == userId);
-    }, [id, chatId]);
+        setIsSender(message.user.id === userId);
+    }, [id, chatId, message?.user?.id, userId]);
 
     useEffect(() => {
         if (message.isReaded == null) {
@@ -91,6 +93,29 @@ export default function Message({ message, chatId }) {
         setReplyMessage(message.replyMessage);
     }, [message.replyMessage, chatId]);
 
+    useEffect(() => {
+        if (!id) {
+            return;
+        }
+
+        if (isReaded || isSender || isReaded == null || isSender == null) {
+            return;
+        }
+
+        if (!isSender && !isReaded) {
+            setReadedToMessage(id, token)
+                .then(() => {
+                    setIsReaded(true);
+                    message.isReaded = true;
+                    // messageUpdateHandler(message);
+                }).catch((error) => {
+                    console.log(error);
+                });
+        }
+
+    }, [isSender, isReaded, chatId, id, message, token]);
+
+    
     return (
         <div
             className={`p-2 rounded mb-2 ${isSender ? 'bg-primary text-white' : 'bg-light'}`}
@@ -109,7 +134,7 @@ export default function Message({ message, chatId }) {
                     style={{ marginRight: '16px' }}
                 >
                     {media && (<img src={media} alt="" style={{ maxWidth: '200px' }} />)}
-                    <p className="mb-0">{text}</p>
+                    <p className="mb-0" style={{ fontSize: '14px'}}>{text}</p>
                     {isEdited && (
                         <p
                             className={`mb-0 ${isSender ? 'text-light' : 'text-muted'}`}

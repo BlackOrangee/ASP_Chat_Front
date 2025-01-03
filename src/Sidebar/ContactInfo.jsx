@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import PropTypes, { array } from 'prop-types';
+import PropTypes from 'prop-types';
 import { FetchAndStoreImage, LoadImageFromLocalStorage, fetchMediaLink } from '../api.js';
 
 const ContactInfo = ({ contact, setChatId }) => {
@@ -47,14 +47,14 @@ const ContactInfo = ({ contact, setChatId }) => {
             return;
         }
 
-        if (contactType === 'P2P') {
-            const user = contact.users.filter((user) => user.id != userId);
-            const image = user[0].image;
-            setContactImageId(image ? image.id : null);
+        if (contactType !== 'P2P') {
+            setContactImageId(contact.image?.id);
             return;
         }
-        setContactImageId(contact.image?.id);
-    }, [contact]);
+        const user = contact.users.filter((user) => user.id !== parseInt(userId));
+        const image = user[0].image;
+        setContactImageId(image ? image.id : null);
+    }, [contact, contactType, userId]);
 
     useEffect(() => {
         if (!contactId) {
@@ -64,7 +64,7 @@ const ContactInfo = ({ contact, setChatId }) => {
         if (contactImageId) {
             FetchMediaLink(contactImageId, token);
         }
-    }, [contactImageId]);
+    }, [contactImageId, contactId, token]);
 
     useEffect(() => {
         if (!contactImageId || !contactId) {
@@ -94,7 +94,7 @@ const ContactInfo = ({ contact, setChatId }) => {
         if(!contactImage) {
             FetchAndStoreImage(imageUrl, contactId, contactImageId);
         }
-    }, [imageUrl, contactId, contactImageId]);
+    }, [imageUrl, contactId, contactImageId, contactImage]);
 
     useEffect(() => {
         if (!contact) {
@@ -102,12 +102,12 @@ const ContactInfo = ({ contact, setChatId }) => {
         }
 
         if (contactType === 'P2P') {
-            setContactName(contact.users.filter((user) => user.id != userId)[0].name);
+            setContactName(contact.users.filter((user) => user.id !== parseInt(userId))[0].name);
             return;
         }
 
         setContactName(contact.name);
-    }, [contact]);
+    }, [contact, contactType, userId]);
 
     useEffect(() => {
         if (!contact.type) {

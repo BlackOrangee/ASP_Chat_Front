@@ -1,26 +1,36 @@
-export const fetchRequest = async (endpoint, method = 'GET', body = null, token = null) => {
-    const headers = { 'Content-Type': 'application/json' };
+import { message } from "antd";
+const API_URL = 'http://localhost:5005';
+const API_VERSION = '/api/v1';
 
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    const options = {
-        method,
-        headers,
-    };
-
-    if (body) {
-        options.body = JSON.stringify(body);
-    }
+export const fetchRequestCombined = async (endpoint, method = 'GET', token = null, body = null, 
+                                            apiVersion = API_VERSION, onSuccess = null) => {
 
     try {
-        const response = await fetch(endpoint, options);
+        const headersType = body && (body instanceof FormData ? 'multipart/form-data' : 'application/json');
+        const response = await fetch(API_URL + apiVersion + endpoint, {
+            method: method,
+            headers: {
+                ...(headersType === 'application/json' && { 'Content-Type': 'application/json' }),
+                // 'Content-Type': headersType,
+                ...(token && { Authorization: `Bearer ${token}` }),
+            },
+            ...(body && (body instanceof FormData ? { body: body } : { body: JSON.stringify(body) }))
+        });
 
         const data = await response.json();
         console.log(data);
         if (data.Success) {
-            return data.Data;
+            onSuccess?.();
+            if (data.Data) {
+                return data.Data;
+            }
+            else if (data.Message) {
+                message.success(data.Message);
+                return data.Message;
+            }
+            else {
+                return data;
+            }
         }
         else if (data.Errors && Array.isArray(data.Errors)) {
             const errorMessages = data.Errors.join(', ');
@@ -36,97 +46,56 @@ export const fetchRequest = async (endpoint, method = 'GET', body = null, token 
     }
 };
 
-export const fetchRequestF = async (endpoint, method = 'GET', body = null, token = null) => {
-    const headers = {};
+export const registerRequest = async (values) => {
+    return fetchRequestCombined('/Register', 'POST', null, values, '/Auth');
+}
 
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    const options = {
-        method,
-        headers,
-    };
-
-    if (body instanceof FormData) {
-        options.body = body;
-    } else if (body) {
-        const formData = new FormData();
-        for (const key in body) {
-            formData.append(key, body[key]);
-        }
-        options.body = formData;
-    }
-    console.warn(options, endpoint);
-    try {
-        const response = await fetch(endpoint, options);
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData?.Errors?.join(', ') || response.statusText);
-        }
-
-        const data = await response.json();
-        if (data.Success) {
-            return data.Data;
-        } else if (data.Errors && Array.isArray(data.Errors)) {
-            throw new Error(data.Errors.join(', '));
-        } else if (data?.Error?.Code === "AccessDenied") {
-            throw new Error(data?.Error?.Message);
-        }
-    } catch (error) {
-        console.error('Fetch error:', error);
-        throw new Error(error.message || 'Network error. Please try again later.');
-    }
+export const loginRequest = async (values, onAuthSuccess) => {
+    return fetchRequestCombined('/Login', 'POST', null, values, '/Auth', onAuthSuccess);
 };
 
 export const sendMessage = async (formData, token) => {
-    const response = await fetch('http://localhost:5005/api/v1/Message', {
-        method: 'POST',
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-    });
-
-    // if (!response.ok) {
-    //     throw new Error('Failed to send message');
-    // }
-
-    return response.json();
+    return fetchRequestCombined('/Message', 'POST', token, formData);
 };
 
+export const updateUserProfile = async (formData, token) => {
+    return fetchRequestCombined('/User', 'PUT', token, formData);
+};
+
+export const changePassRequest = async (values, token) => {
+    return fetchRequestCombined('/change-password', 'POST', token, values, '/Auth');
+};
+
+export const fetchMessageById = async (messageId, token) => {
+    return fetchRequestCombined(`/Message/${messageId}`, 'GET', token);
+};
+
+export const setReadedToMessage = async (messageId, token) => {
+    return fetchRequestCombined(`/Message/${messageId}`, 'PUT', token);
+};
 
 export const fetchMessages = async (chatId, lastMessageId, token) => {
-    return fetchRequest(`/api/v1/Message/chat/${chatId}${lastMessageId ? `?lastMessageId=${lastMessageId}` : ''}`, 'GET', null, token);
+    const queryString = lastMessageId ? `?lastMessageId=${lastMessageId}` : '';
+    return fetchRequestCombined(`/Message/chat/${chatId}${queryString}`, 'GET', token);
 }
 
 export const fetchChatById = async (id, token) => {
-    return fetchRequest('/api/v1/Chat/' + id, 'GET', null, token);
+    return fetchRequestCombined('/Chat/' + id, 'GET', token);
 }
 
 export const fetchUserChats = async (token) => {
-    return fetchRequest('/api/v1/Chat', 'GET', null, token);
+    return fetchRequestCombined('/Chat', 'GET', token);
 }
 
 export const fetchMediaLink = async (id, token) => {
     if (!id) {
         return null;
     }
-    console.log('ID: {id}', id);
-    return fetchRequest('/api/v1/Media/' + id, 'GET', null, token);
+    return fetchRequestCombined('/Media/' + id, 'GET', token);
 };
 
-export const loginUser = async (credentials) => {
-    return fetchRequest('/Login', 'POST', credentials);
-};
-
-export const registerUser = async (registrationData) => {
-    return fetchRequest('/Register', 'POST', registrationData);
-};
-
-export const fetchProfile = async (token) => {
-    return fetchRequest('/Profile', 'GET');
+export const fetchProfile = async (id, token) => {
+    return fetchRequestCombined('/User/' + id, 'GET', token);
 };
 
 export const FetchAndStoreImage = async (url, userId, userImageId) => {

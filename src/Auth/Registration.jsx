@@ -2,7 +2,8 @@ import { Formik, Field, Form, ErrorMessage } from 'formik';
 import React from 'react';
 import * as Yup from 'yup';
 import styles from './Form.module.scss';
-import { message } from 'antd';
+import { registerRequest } from '../api';
+import PropTypes from 'prop-types';
 
 const initialValues = {
     name: '',
@@ -12,35 +13,12 @@ const initialValues = {
 
 const submitHandler = async (values, formikBag) => {
     try {
-        const response = await fetch('/auth/register', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(values),
-        });
-
-        const data = await response.json();
-
-        if (data.Success) {
-            console.log('Registration successful:', data.Message);
-            message.success(data.Message);
-            formikBag.resetForm();
-        } else if (data.Errors && Array.isArray(data.Errors)) {
-            const errorMessages = data.Errors.join(', ');
-            message.error(`Registration failed: ${errorMessages}`);
-        } else if (data.errors) {
-            const validationErrors = Object.values(data.errors)
-                .flat()
-                .join(', ');
-            message.error(`Validation failed: ${validationErrors}`);
-        } else {
-            message.error('An unexpected error occurred. Please try again.');
-        }
+        await registerRequest(values);
     } catch (error) {
         console.error('Registration error:', error);
         alert('An error occurred. Please try again.');
     }
+    formikBag.resetForm();
 
     formikBag.setSubmitting(false);
 };
@@ -63,6 +41,10 @@ const RegistrationSchema = Yup.object().shape({
 });
 
 const Registration = ({ toggleForm }) => {
+    Registration.propTypes = {
+        toggleForm: PropTypes.func
+    }
+    
     return (
         <div className={styles.registrationForm}>
             <h2>Registration</h2>

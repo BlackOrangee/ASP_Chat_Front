@@ -3,6 +3,8 @@ import React from 'react';
 import * as Yup from 'yup';
 import styles from './Form.module.scss';
 import { message } from 'antd';
+import { loginRequest } from '../api';
+import PropTypes from 'prop-types';
 
 const initialValues = {
     username: '',
@@ -21,31 +23,15 @@ const submitHandler = async (values, formikBag, onAuthSuccess) => {
     };
 
     try {
-        const response = await fetch('/Auth/Login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(loginData),
-        });
-        const data = await response.json();
+        const response = await loginRequest(loginData, onAuthSuccess);
 
-        console.log(data);
-        if (data.Success) {
-            message.success('Login successful!');
-            localStorage.setItem('token', data.Data.token);
-            localStorage.setItem('userId', data.Data.user.id);
-            localStorage.setItem('name', data.Data.user.name);
-            if (data.Data.user.image) {
-                localStorage.setItem('imageId', data.Data.user.image.id);
-            }
-            onAuthSuccess();
-        } else if (data.Errors && Array.isArray(data.Errors)) {
-            const errorMessages = data.Errors.join(', ');
-            message.error(errorMessages);
-        } else {
-            message.error('An unexpected error occurred.');
+        message.success('Login successful!');
 
+        localStorage.setItem('token', response.token);
+        localStorage.setItem('userId', response.user.id);
+        localStorage.setItem('name', response.user.name);
+        if (response.user.image) {
+            localStorage.setItem('imageId', response.user.image.id);
         }
     } catch (error) {
         message.error('An error occurred. Please try again later.');
@@ -56,6 +42,11 @@ const submitHandler = async (values, formikBag, onAuthSuccess) => {
 };
 
 const Login = ({ toggleForm, onAuthSuccess }) => {
+    Login.propTypes = {
+        toggleForm: PropTypes.func,
+        onAuthSuccess: PropTypes.func
+    };
+
     return (
         <div className={styles.loginForm}>
             <h2>Login</h2>
