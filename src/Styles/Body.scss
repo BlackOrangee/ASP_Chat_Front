@@ -1,0 +1,61 @@
+$scrollbar-width: 8px;
+$scrollbar-track-color: #f1f1f1;
+$scrollbar-thumb-color: #888;
+$scrollbar-thumb-hover-color: #555;
+$scrollbar-thumb-radius: 4px;
+
+.custom-scrollbar {
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: $scrollbar-width;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: $scrollbar-track-color;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: $scrollbar-thumb-color;
+    border-radius: $scrollbar-thumb-radius;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: $scrollbar-thumb-hover-color;
+  }
+}
+
+
+
+
+.chat-container {
+    height: 100vh;
+    display: flex;
+    overflow: hidden;
+  }
+
+  .chat-messages {
+    background-color: #c5c1c1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+  .chat-messages .messages {
+    flex-grow: 1;
+    padding: 1rem;
+  }
+  .chat-details {
+    background-color: #f8f9fa;
+    border-left: 1px solid #dee2e6;
+    overflow-y: auto;
+    width: 100%;
+  }
+  .message-input {
+    border-top: 1px solid #dee2e6;
+    padding: 0.5rem;
+  }
+
+
+
+  @import 'Sidebar.scss';
