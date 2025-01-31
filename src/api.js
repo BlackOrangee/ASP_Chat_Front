@@ -46,6 +46,10 @@ export const fetchRequestCombined = async (endpoint, method = 'GET', token = nul
     }
 };
 
+export const attachFileToMessage = async (formData, token) => {
+    return fetchRequestCombined('/Message/Media', 'POST', token, formData);
+}
+
 export const registerRequest = async (values) => {
     return fetchRequestCombined('/Register', 'POST', null, values, '/Auth');
 }

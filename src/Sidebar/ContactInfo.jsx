@@ -147,7 +147,7 @@ const ContactInfo = ({ contact, setChatId, unreadMessagesCount }) => {
                 {/* } */}
                 <div className=" d-flex align-items-center">
                     <p className='ms-3 mb-0'>{contactName}</p>
-                    <p style={{ 
+                    { unreadMessagesCount > 0 && <p style={{ 
                         background: 'gray', 
                         padding: '0px 7px', 
                         borderRadius: '50%', 
@@ -155,7 +155,7 @@ const ContactInfo = ({ contact, setChatId, unreadMessagesCount }) => {
                         marginBottom: '0px',
                         color: 'white'
                         }}
-                    >{unreadMessagesCount}</p>
+                    >{unreadMessagesCount}</p>}
                 </div>
 
             </button>
