@@ -4,14 +4,18 @@ import { Formik, Form, Field } from 'formik';
 import { sendMessage, fetchMessages } from '../api';
 import { message as antdMessage } from 'antd';
 import Message from './Message';
+// import ChatHub from '../ChatHub';
+import { useChatHub } from '../HubContext';
 
 export default function ChatArea({ chatId, setChatId }) {
     const token = localStorage.getItem('token');
     const [lastMessageId, setLastMessageId] = useState(null);
     const [messagesArray, setMessagesArray] = useState([]);
-    const [unreadMessages, setUnreadMessages] = useState([]);
-    const [scrollToBottom, setScrollToBottom] = React.useState(false);
+    // const [unreadMessages, setUnreadMessages] = useState([]);
+    const [scrollToBottom, setScrollToBottom] = React.useState(true);
     const messagesEndRef = React.useRef(null);
+
+    const chatHub = useChatHub();
 
     ChatArea.propTypes = {
         chatId: PropTypes.number.isRequired,
@@ -19,15 +23,55 @@ export default function ChatArea({ chatId, setChatId }) {
     };
 
     useEffect(() => {
-        if (messagesArray.length > 0) {
-            setUnreadMessages([]);
-            messagesArray.forEach((message) => {
-                if (!message.isReaded) {
-                    setUnreadMessages((prevUnreadMessages) => [...prevUnreadMessages, message]);
-                }
-            });
+        if (!chatHub) {
+            return;
         }
-    }, [messagesArray]);
+        // chatHub.connection.off("ReceiveMessage");
+        // chatHub.connection.off("ReadedMessage");
+
+        const reciveMessage = (message, messageChatId) => {
+            console.log("Received message: ", message, messageChatId.chatId);
+            const messageWithChatId = parseInt(messageChatId.chatId);
+            const usingChatId = parseInt(chatId);
+            if (messageWithChatId === usingChatId) {
+                setMessagesArray((prevMessages) => [...prevMessages, message]);
+            }
+        }
+        
+        const readedMessage = (readedMessage, messageChatId) => {
+            const messageWithChatId = parseInt(messageChatId.chatId);
+            const usingChatId = parseInt(chatId);
+            if (messageWithChatId === usingChatId) {
+                setMessagesArray((prevMessages) => {
+                    return prevMessages.map((message) => {
+                        if (message.id === readedMessage.id) {
+                            return { ...message, isReaded: true };
+                        }
+                        return message;
+                    });
+                });
+            }
+        }
+
+        // chatHub.connection.off("ReceiveMessage", reciveMessage);
+        // chatHub.connection.off("ReadedMessage", readedMessage);
+
+        chatHub.onReceiveMessage(reciveMessage);
+        chatHub.onReadedMessage(readedMessage);
+        
+
+    }, [chatHub, chatId]);
+
+    // useEffect(() => {
+    //     if (messagesArray.length > 0) {
+    //         setUnreadMessages([]);
+    //         messagesArray.forEach((message) => {
+    //             if (!message.isReaded) {
+    //                 setUnreadMessages((prevUnreadMessages) => [...prevUnreadMessages, message]);
+    //             }
+    //         });
+    //     }
+    // }, [messagesArray]);
 
     useEffect(() => {
         const fetchMessagesAsync = async () => {
@@ -52,71 +96,71 @@ export default function ChatArea({ chatId, setChatId }) {
         fetchMessagesAsync();
     }, [chatId, token]);
 
-    useEffect(() => {
-        const fetchMessagesAsync = async (lastMessageId) => {
-            if (!chatId || !token) {
-                return;
-            }
+    // useEffect(() => {
+    //     const fetchMessagesAsync = async (lastMessageId) => {
+    //         if (!chatId || !token) {
+    //             return;
+    //         }
 
-            try {
-                const response = await fetchMessages(chatId, lastMessageId, token);
-                console.log('unreadMessages: ', unreadMessages);
-                if (response.length > 0) {
-                    setMessagesArray((prevMessages) => {
-                        const updatedMessages = prevMessages.map((prevMessage) => {
-                            const matchingMessage = response.find((msg) => msg.id === prevMessage.id);
-                            return matchingMessage
-                                ? { ...prevMessage, isReaded: matchingMessage.isReaded }
-                                : prevMessage;
-                        });
+    //         try {
+    //             const response = await fetchMessages(chatId, lastMessageId, token);
+    //             console.log('unreadMessages: ', unreadMessages);
+    //             if (response.length > 0) {
+    //                 setMessagesArray((prevMessages) => {
+    //                     const updatedMessages = prevMessages.map((prevMessage) => {
+    //                         const matchingMessage = response.find((msg) => msg.id === prevMessage.id);
+    //                         return matchingMessage
+    //                             ? { ...prevMessage, isReaded: matchingMessage.isReaded }
+    //                             : prevMessage;
+    //                     });
 
-                        const newMessages = response.filter(
-                            (msg) => !prevMessages.some((prevMsg) => prevMsg.id === msg.id)
-                        );
+    //                     const newMessages = response.filter(
+    //                         (msg) => !prevMessages.some((prevMsg) => prevMsg.id === msg.id)
+    //                     );
 
-                        return [...updatedMessages, ...newMessages];
-                    });
+    //                     return [...updatedMessages, ...newMessages];
+    //                 });
 
-                    if (unreadMessages.length > 0) {
-                        unreadMessages.forEach((message) => {
-                            const matchingMessage = response.find((msg) => msg.id === message.id)
+    //                 if (unreadMessages.length > 0) {
+    //                     unreadMessages.forEach((message) => {
+    //                         const matchingMessage = response.find((msg) => msg.id === message.id)
 
-                            if (matchingMessage && matchingMessage.isReaded !== message.isReaded) {
-                                setUnreadMessages((prevUnreadMessages) => prevUnreadMessages.filter((msg) => msg.id !== message.id));
-                            }
-                        })
-                    }
+    //                         if (matchingMessage && matchingMessage.isReaded !== message.isReaded) {
+    //                             setUnreadMessages((prevUnreadMessages) => prevUnreadMessages.filter((msg) => msg.id !== message.id));
+    //                         }
+    //                     })
+    //                 }
 
-                }
-            } catch (error) {
-                antdMessage.error('Error fetching messages:', error.message);
-            }
-        };
+    //             }
+    //         } catch (error) {
+    //             antdMessage.error('Error fetching messages:', error.message);
+    //         }
+    //     };
 
-        const intervalId = setInterval(() => {
-            fetchMessagesAsync(lastMessageId);
-        }, 5000);
+    //     const intervalId = setInterval(() => {
+    //         fetchMessagesAsync(lastMessageId);
+    //     }, 5000);
 
-        return () => {
-            clearInterval(intervalId);
-        };
-    }, [lastMessageId, chatId, token, unreadMessages]);
+    //     return () => {
+    //         clearInterval(intervalId);
+    //     };
+    // }, [lastMessageId, chatId, token, unreadMessages]);
 
     useEffect(() => {
         if (messagesArray.length > 0) {
             let lastMessageId = null;
 
-            if (unreadMessages.length > 0) {
-                unreadMessages.forEach((message) => {
-                    if (lastMessageId === null) {
-                        lastMessageId = message.id;
-                    }
+            // if (unreadMessages.length > 0) {
+            //     unreadMessages.forEach((message) => {
+            //         if (lastMessageId === null) {
+            //             lastMessageId = message.id;
+            //         }
 
-                    if (!message.isReaded && message.id < lastMessageId) {
-                        lastMessageId = message.id;
-                    }
-                });
-            }
+            //         if (!message.isReaded && message.id < lastMessageId) {
+            //             lastMessageId = message.id;
+            //         }
+            //     });
+            // }
 
             if (!lastMessageId || lastMessageId === Infinity) {
                 lastMessageId = messagesArray[messagesArray.length - 1].id;
@@ -124,7 +168,9 @@ export default function ChatArea({ chatId, setChatId }) {
             localStorage.setItem('lastMessageId', lastMessageId);
             setLastMessageId(lastMessageId);
         }
-    }, [unreadMessages, messagesArray]);
+    }, [
+        // unreadMessages, 
+        messagesArray]);
 
     const handleFormSubmit = async (values, { resetForm }) => {
         console.log("Form values:", values);
@@ -133,22 +179,26 @@ export default function ChatArea({ chatId, setChatId }) {
             return;
         }
 
-        const formData = new FormData();
-        formData.append('ChatId', chatId);
-        // formData.append('ReplyMessageId', null);
-        formData.append('Text', values.text);
+        // const formData = new FormData();
+        // formData.append('ChatId', chatId);
+        // // formData.append('ReplyMessageId', null);
+        // formData.append('Text', values.text);
 
-        if (values.file) {
-            formData.append('File', values.file);
-        }
+        // if (values.file) {
+        //     formData.append('File', values.file);
+        // }
 
-        try {
-            const response = await sendMessage(formData, token);
-            response && setMessagesArray((prevMessages) => [...prevMessages, response]);
-            resetForm();
-        } catch (error) {
-            antdMessage.error('Error sending message: ' + error.message);
-        }
+        // try {
+        //     const response = await sendMessage(formData, token);
+        //     response && setMessagesArray((prevMessages) => [...prevMessages, response]);
+        //     resetForm();
+        // } catch (error) {
+        //     antdMessage.error('Error sending message: ' + error.message);
+        // }
+
+        await chatHub.sendMessage(chatId, values.text);
+        resetForm();
+
     };
 
 

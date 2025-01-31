@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { FetchAndStoreImage, LoadImageFromLocalStorage, fetchMediaLink } from '../api.js';
 
-const ContactInfo = ({ contact, setChatId }) => {
+const ContactInfo = ({ contact, setChatId, unreadMessagesCount }) => {
     ContactInfo.propTypes = {
         contact: PropTypes.shape({
             id: PropTypes.number.isRequired,
@@ -11,7 +11,8 @@ const ContactInfo = ({ contact, setChatId }) => {
             name: PropTypes.string,
             image: PropTypes.object,
         }).isRequired,
-        setChatId: PropTypes.func.isRequired
+        setChatId: PropTypes.func.isRequired,
+        unreadMessagesCount: PropTypes.number
     };
 
     const token = localStorage.getItem('token');
@@ -22,7 +23,7 @@ const ContactInfo = ({ contact, setChatId }) => {
     const [contactType, setContactType] = useState(null);
     const [contactName, setContactName] = useState(null);
     const [contactId, setContactId] = useState(null);
-    const [contactImage, setContactImage] = useState(null);
+    // const [contactImage, setContactImage] = useState(null);
 
 
     useEffect(() => {
@@ -51,50 +52,54 @@ const ContactInfo = ({ contact, setChatId }) => {
             setContactImageId(contact.image?.id);
             return;
         }
-        const user = contact.users.filter((user) => user.id !== parseInt(userId));
-        const image = user[0].image;
-        setContactImageId(image ? image.id : null);
+        // ;
+        // const user = contact.users.filter((user) => user.id !== parseInt(userId));
+        // const image = user[0].image;
+        setContactImageId(contact.users.filter((user) => user.id != userId)[0].image?.id);
+        let imageId = contact.users.filter((user) => user.id != userId)[0].image?.id
+        console.log("user image id", imageId);
+        console.log("Contact users: ", contact.users);
     }, [contact, contactType, userId]);
 
     useEffect(() => {
         if (!contactId) {
             return;
         }
-        
+
         if (contactImageId) {
             FetchMediaLink(contactImageId, token);
         }
     }, [contactImageId, contactId, token]);
 
-    useEffect(() => {
-        if (!contactImageId || !contactId) {
-            return;
-        }
+    // useEffect(() => {
+    //     if (!contactImageId || !contactId) {
+    //         return;
+    //     }
 
-        const base64Image = LoadImageFromLocalStorage(contactId, contactImageId);
-        if (!base64Image) {
-            console.log('Image not found in local storage 1');
-            return;
-        }
+    //     const base64Image = LoadImageFromLocalStorage(contactId, contactImageId);
+    //     if (!base64Image) {
+    //         console.log('Image not found in local storage 1');
+    //         return;
+    //     }
 
-        if (base64Image.startsWith("data:application/octet-stream")) {
-            setContactImage(base64Image.replace("data:application/octet-stream", "data:image/png"));
-        }
-        else {
-            setContactImage(base64Image);
-        }
-        
-    }, [contactImageId, contactId]);
-    
-    useEffect(() => {
-        if (!contactId || !imageUrl || !contactImageId) {
-            return;
-        }
+    //     if (base64Image.startsWith("data:application/octet-stream")) {
+    //         setContactImage(base64Image.replace("data:application/octet-stream", "data:image/png"));
+    //     }
+    //     else {
+    //         setContactImage(base64Image);
+    //     }
 
-        if(!contactImage) {
-            FetchAndStoreImage(imageUrl, contactId, contactImageId);
-        }
-    }, [imageUrl, contactId, contactImageId, contactImage]);
+    // }, [contactImageId, contactId]);
+
+    // useEffect(() => {
+    //     if (!contactId || !imageUrl || !contactImageId) {
+    //         return;
+    //     }
+
+    //     if(!contactImage) {
+    //         FetchAndStoreImage(imageUrl, contactId, contactImageId);
+    //     }
+    // }, [imageUrl, contactId, contactImageId, contactImage]);
 
     useEffect(() => {
         if (!contact) {
@@ -125,22 +130,34 @@ const ContactInfo = ({ contact, setChatId }) => {
         setChatId(contactId);
     }
 
-    const baseImage = imageUrl || 'https://via.placeholder.com/40';
+    const baseImage = imageUrl || 'https://placehold.co/60x60';
     return (
         <li className="list-group-item" >
             <button
                 className="btn d-flex align-items-center"
                 onClick={SelectContact}
             >
-                { (contactImage || baseImage )&& <img
+                {/* { (contactImage || baseImage )&&  */}
+                <img
                     className="rounded-circle"
                     style={{ width: '40px', height: '40px' }}
-                    src={ contactImage?.startsWith("data:application/octet-stream") 
-                        ? contactImage.replace("data:application/octet-stream", "data:image/png") 
-                        : contactImage ||  baseImage}
+                    src={baseImage}
                     alt="User"
-                />}
-                <p className="ms-3 mb-0">{contactName}</p>
+                />
+                {/* } */}
+                <div className=" d-flex align-items-center">
+                    <p className='ms-3 mb-0'>{contactName}</p>
+                    <p style={{ 
+                        background: 'gray', 
+                        padding: '0px 7px', 
+                        borderRadius: '50%', 
+                        marginLeft: '10px', 
+                        marginBottom: '0px',
+                        color: 'white'
+                        }}
+                    >{unreadMessagesCount}</p>
+                </div>
+
             </button>
         </li>
     );

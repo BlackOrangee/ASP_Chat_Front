@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { BsCheck2, BsCheck2All } from 'react-icons/bs';
 import PropTypes from 'prop-types';
 import { setReadedToMessage } from '../api';
+import { useChatHub } from '../HubContext';
 
 export default function Message({ message, chatId }) {
 
@@ -33,6 +34,7 @@ export default function Message({ message, chatId }) {
     const [isSender, setIsSender] = useState(null);
     const [media, setmedia] = useState(null);
 
+    const chatHub = useChatHub();
     useEffect(() => {
         if (!id) {
             return;
@@ -103,19 +105,26 @@ export default function Message({ message, chatId }) {
         }
 
         if (!isSender && !isReaded) {
-            setReadedToMessage(id, token)
-                .then(() => {
-                    setIsReaded(true);
-                    message.isReaded = true;
-                    // messageUpdateHandler(message);
-                }).catch((error) => {
-                    console.log(error);
-                });
+            if (chatHub) {
+                console.log("Marking message as read: ", id);
+                chatHub.markMessageAsRead(id);
+
+                // setIsReaded(true);
+                // message.isReaded = true;
+            }
+            // setReadedToMessage(id, token)
+            //     .then(() => {
+            //         setIsReaded(true);
+            //         message.isReaded = true;
+            //         // messageUpdateHandler(message);
+            //     }).catch((error) => {
+            //         console.log(error);
+            //     });
         }
 
     }, [isSender, isReaded, chatId, id, message, token]);
 
-    
+
     return (
         <div
             className={`p-2 rounded mb-2 ${isSender ? 'bg-primary text-white' : 'bg-light'}`}
@@ -134,7 +143,7 @@ export default function Message({ message, chatId }) {
                     style={{ marginRight: '16px' }}
                 >
                     {media && (<img src={media} alt="" style={{ maxWidth: '200px' }} />)}
-                    <p className="mb-0" style={{ fontSize: '14px'}}>{text}</p>
+                    <p className="mb-0" style={{ fontSize: '14px' }}>{text}</p>
                     {isEdited && (
                         <p
                             className={`mb-0 ${isSender ? 'text-light' : 'text-muted'}`}

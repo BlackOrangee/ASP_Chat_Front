@@ -11,7 +11,7 @@ export default function UserInfo() {
     const [description, setDescription] = useState('');
     const [imageUrl, setImageUrl] = useState(null);
     const [userId, setUserId] = useState(null);
-    const [localImageURL, setLocalImageURL] = useState(null);
+    // const [localImageURL, setLocalImageURL] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const LoadVariablesFromLocalStorage = useCallback(() => {
@@ -77,38 +77,38 @@ export default function UserInfo() {
 
     }, [imageId, token, imageUrl]);
 
-    useEffect(() => {
-        if (!imageId || !userId) {
-            return;
-        }
+    // useEffect(() => {
+    //     if (!imageId || !userId) {
+    //         return;
+    //     }
 
-        const base64Image = LoadImageFromLocalStorage(userId, imageId);
-        if (!base64Image) {
-            console.log('Image not found in local storage');
-            return;
-        }
+    //     const base64Image = LoadImageFromLocalStorage(userId, imageId);
+    //     if (!base64Image) {
+    //         console.log('Image not found in local storage');
+    //         return;
+    //     }
 
-        if (base64Image.startsWith("data:application/octet-stream")) {
-            setLocalImageURL(base64Image.replace("data:application/octet-stream", "data:image/png"));
-        }
-        else {
-            setLocalImageURL(base64Image);
-        }
+    //     if (base64Image.startsWith("data:application/octet-stream")) {
+    //         setLocalImageURL(base64Image.replace("data:application/octet-stream", "data:image/png"));
+    //     }
+    //     else {
+    //         setLocalImageURL(base64Image);
+    //     }
 
-        setLocalImageURL(base64Image);
-    }, [imageId, userId]);
+    //     setLocalImageURL(base64Image);
+    // }, [imageId, userId]);
 
-    useEffect(() => {
-        if (!userId || !imageUrl || !imageId) {
-            return;
-        }
+    // useEffect(() => {
+    //     if (!userId || !imageUrl || !imageId) {
+    //         return;
+    //     }
 
-        if (!localImageURL) {
-            FetchAndStoreImage(imageUrl, userId, imageId);
-        }
-    }, [imageUrl, userId, imageId, localImageURL]);
+    //     if (!localImageURL) {
+    //         FetchAndStoreImage(imageUrl, userId, imageId);
+    //     }
+    // }, [imageUrl, userId, imageId, localImageURL]);
 
-    const defaultImageUrl = imageUrl || 'https://via.placeholder.com/40';
+    const defaultImageUrl = imageUrl || 'https://placehold.co/60x60';
 
     return (
         <>
@@ -117,21 +117,21 @@ export default function UserInfo() {
                 className="btn d-flex align-items-center p-3 short-user-info"
                 onClick={() => setIsModalOpen(true)}
             >
-                {localImageURL && <img
+                {/* {localImageURL &&  */}
+                <img
                     style={{ objectFit: 'cover', width: '60px', height: '60px' }}
                     className="rounded-circle"
-                    src={localImageURL?.startsWith("data:application/octet-stream")
-                        ? localImageURL.replace("data:application/octet-stream", "data:image/png")
-                        : localImageURL || defaultImageUrl}
+                    src={defaultImageUrl}
                     alt="User"
-                />}
+                />
+                {/* } */}
                 <h5 className="ms-3 mb-0">{name || 'User Name'}</h5>
             </button>
 
             <UserModal
                 isModalOpen={isModalOpen}
                 setIsModalOpen={setIsModalOpen}
-                imageUrl={localImageURL ?? defaultImageUrl}
+                imageUrl={defaultImageUrl}
                 userData={{
                     name,
                     username,
