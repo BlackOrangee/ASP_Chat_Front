@@ -53,11 +53,25 @@ export default function ChatArea({ chatId, setChatId }) {
             }
         }
 
+        const attachFileToMessage = (messageWithFile) => {
+            setMessagesArray((prevMessages) => {
+                return prevMessages.map((message) => {
+                    if (message.id === messageWithFile.id) {
+                        console.log('messageWithFile', messageWithFile);
+                        return { ...message, media: messageWithFile.media };
+                    }
+                    console.log('message', message);
+                    return message;
+                });
+            });
+        }
+
         // chatHub.connection.off("ReceiveMessage", reciveMessage);
         // chatHub.connection.off("ReadedMessage", readedMessage);
 
         chatHub.onReceiveMessage(reciveMessage);
         chatHub.onReadedMessage(readedMessage);
+        chatHub.onAttachMediaToMessage(attachFileToMessage);
         
 
     }, [chatHub, chatId]);

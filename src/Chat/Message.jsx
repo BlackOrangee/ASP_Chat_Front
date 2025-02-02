@@ -10,16 +10,30 @@ export default function Message({ message, chatId }) {
     Message.propTypes = {
         message: PropTypes.shape({
             id: PropTypes.number.isRequired,
-            user: PropTypes.object.isRequired,
-            replyMessage: PropTypes.object,
+            user: PropTypes.shape({
+                id: PropTypes.number.isRequired,
+                name: PropTypes.string.isRequired,
+                username: PropTypes.string.isRequired,
+                description: PropTypes.string, // може бути null
+                image: PropTypes.shape({
+                    id: PropTypes.number.isRequired
+                }).isRequired
+            }).isRequired,
+            replyMessage: PropTypes.oneOfType([
+                PropTypes.shape({
+                    id: PropTypes.number.isRequired
+                }),
+                PropTypes.oneOf([null])
+            ]),
             date: PropTypes.string.isRequired,
-            text: PropTypes.string,
+            text: PropTypes.oneOfType([PropTypes.string, PropTypes.oneOf([null])]),
             isEdited: PropTypes.bool.isRequired,
             isReaded: PropTypes.bool.isRequired,
-            media: PropTypes.oneOfType([
-                PropTypes.object,
-                PropTypes.array
-            ]),
+            media: PropTypes.arrayOf(
+                PropTypes.shape({
+                    id: PropTypes.number.isRequired
+                })
+            )
         }).isRequired,
         chatId: PropTypes.number.isRequired
     };
@@ -33,10 +47,18 @@ export default function Message({ message, chatId }) {
     const [isEdited, setIsEdited] = useState(null);
     const [isReaded, setIsReaded] = useState(null);
     const [isSender, setIsSender] = useState(null);
-    const [media, setmedia] = useState(message?.media);
-    const [mediLink, setMediaLink] = useState(null);
+    const [media, setmedia] = useState([]);
+    const [mediLink, setMediaLink] = useState([]);
 
     const chatHub = useChatHub();
+
+    useEffect(() => {
+        if (message == null || message.media == null) {
+            return;
+        }
+        setmedia(message.media);
+    }, [message]);
+
     useEffect(() => {
         if (!id) {
             return;
@@ -127,19 +149,24 @@ export default function Message({ message, chatId }) {
     }, [isSender, isReaded, chatId, id, message, token]);
 
     useEffect(() => {
-        if (!media[0]?.id) {
+        if (!Array.isArray(media) || media.length === 0) {
             return;
         }
 
-        fetchMediaLink(media[0].id, token)
-            .then((response) => {
-                setMediaLink(response);
-            })
-            .catch((error) => {
+        const fetchLinks = async () => {
+            try {
+                const responses = await Promise.all(
+                    media.map(m => fetchMediaLink(m.id, token))
+                );
+                setMediaLink([...responses]);
+            } catch (error) {
                 console.log(error);
-            });
+            }
+        };
 
-    }, [media]);
+        fetchLinks();
+    }, [media, token]);
+
 
     const handleAttachFile = async (values) => {
 
@@ -172,7 +199,9 @@ export default function Message({ message, chatId }) {
             <Dropdown.Toggle as="div" variant="success" id="dropdown-basic">
                 <div className={`d-flex align-items-center ${isSender ? 'justify-content-end' : ''}`}>
                     <div className="d-flex flex-column" style={{ marginRight: '16px' }}>
-                        {mediLink && (<img src={mediLink} alt="" style={{ maxWidth: '200px' }} />)}
+                        {mediLink?.map(link => (
+                            <img key={link} src={link} alt="" style={{ maxWidth: '400px' }} />
+                        ))}
                         <p className="mb-0" style={{ fontSize: '14px' }}>{text}</p>
                         {isEdited && (
                             <p
