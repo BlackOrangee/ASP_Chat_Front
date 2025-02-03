@@ -14,7 +14,7 @@ export default function Message({ message, chatId }) {
                 id: PropTypes.number.isRequired,
                 name: PropTypes.string.isRequired,
                 username: PropTypes.string.isRequired,
-                description: PropTypes.string, // може бути null
+                description: PropTypes.string,
                 image: PropTypes.shape({
                     id: PropTypes.number.isRequired
                 }).isRequired
@@ -47,16 +47,16 @@ export default function Message({ message, chatId }) {
     const [isEdited, setIsEdited] = useState(null);
     const [isReaded, setIsReaded] = useState(null);
     const [isSender, setIsSender] = useState(null);
-    const [media, setmedia] = useState([]);
-    const [mediLink, setMediaLink] = useState([]);
+    const [media, setMedia] = useState([]);
+    const [mediaLink, setMediaLink] = useState({});
 
     const chatHub = useChatHub();
 
     useEffect(() => {
-        if (message == null || message.media == null) {
+        if (message?.media == null) {
             return;
         }
-        setmedia(message.media);
+        setMedia(message.media);
     }, [message]);
 
     useEffect(() => {
@@ -150,15 +150,32 @@ export default function Message({ message, chatId }) {
 
     useEffect(() => {
         if (!Array.isArray(media) || media.length === 0) {
+            console.log('No media to fetch.', media);
             return;
         }
 
         const fetchLinks = async () => {
+            console.log('!!!!!!!!Fetching media links...');
             try {
+                const missingMedia = media.filter(m => !mediaLink[m.id]);
+
+                if (missingMedia.length === 0 && mediaLink.length !== 0) {
+                    console.log('No media links to fetch.');
+                    return;
+                }
+
                 const responses = await Promise.all(
-                    media.map(m => fetchMediaLink(m.id, token))
+                    missingMedia.map(async (m) => {
+                        const link = await fetchMediaLink(m.id, token);
+                        return { id: m.id, link };
+                    })
                 );
-                setMediaLink([...responses]);
+
+                console.log('Fetched media links:', responses);
+                setMediaLink(prevLinks => ({
+                    ...prevLinks,
+                    ...Object.fromEntries(responses.map(({ id, link }) => [id, link]))
+                }));
             } catch (error) {
                 console.log(error);
             }
@@ -166,6 +183,7 @@ export default function Message({ message, chatId }) {
 
         fetchLinks();
     }, [media, token]);
+
 
 
     const handleAttachFile = async (values) => {
@@ -179,7 +197,7 @@ export default function Message({ message, chatId }) {
 
         try {
             const response = await attachFileToMessage(formData, token);
-            response && setmedia(response.media);
+            response && setMedia(response.media);
         } catch (error) {
             console.error('Error sending message: ' + error.message);
         }
@@ -199,7 +217,7 @@ export default function Message({ message, chatId }) {
             <Dropdown.Toggle as="div" variant="success" id="dropdown-basic">
                 <div className={`d-flex align-items-center ${isSender ? 'justify-content-end' : ''}`}>
                     <div className="d-flex flex-column" style={{ marginRight: '16px' }}>
-                        {mediLink?.map(link => (
+                        {mediaLink && Object.values(mediaLink).map(link => (
                             <img key={link} src={link} alt="" style={{ maxWidth: '400px' }} />
                         ))}
                         <p className="mb-0" style={{ fontSize: '14px' }}>{text}</p>
