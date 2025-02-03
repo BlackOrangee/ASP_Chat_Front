@@ -102,6 +102,10 @@ export const fetchProfile = async (id, token) => {
     return fetchRequestCombined('/User/' + id, 'GET', token);
 };
 
+export const searchUsersByUsername = async (username, token) => {
+    return fetchRequestCombined(`/User/?username=${username}`, 'GET', token);
+};
+
 export const FetchAndStoreImage = async (url, userId, userImageId) => {
     try {
         const response = await fetch(url);

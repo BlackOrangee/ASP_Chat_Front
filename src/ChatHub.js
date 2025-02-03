@@ -81,14 +81,20 @@ class ChatHub {
         this.connection.on("Error", error);
     }
 
-    async sendMessage(chatId, messageText) {
+    async sendMessage(chatId, messageText, replyMessageId = null) {
         if (!this.connection || this.connection.state !== signalR.HubConnectionState.Connected) {
             console.error("Connection is not established.");
             return;
         }
 
+        const message = { 
+            ChatId: chatId, 
+            Text: messageText, 
+            ReplyMessageId: replyMessageId 
+        };
+
         try {
-            await this.connection.invoke("SendMessageToChatAsync", { ChatId: chatId, Text: messageText });
+            await this.connection.invoke("SendMessageToChatAsync", message);
         } catch (error) {
             console.error("Error sending message: ", error);
         }

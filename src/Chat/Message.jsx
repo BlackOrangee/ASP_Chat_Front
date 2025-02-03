@@ -5,7 +5,7 @@ import { attachFileToMessage, fetchMediaLink } from '../api';
 import { useChatHub } from '../HubContext';
 import { Dropdown } from 'react-bootstrap';
 
-export default function Message({ message, chatId }) {
+export default function Message({ message, chatId, setReplyMessageId }) {
 
     Message.propTypes = {
         message: PropTypes.shape({
@@ -21,7 +21,25 @@ export default function Message({ message, chatId }) {
             }).isRequired,
             replyMessage: PropTypes.oneOfType([
                 PropTypes.shape({
-                    id: PropTypes.number.isRequired
+                    id: PropTypes.number.isRequired,
+                    user: PropTypes.shape({
+                        id: PropTypes.number.isRequired,
+                        name: PropTypes.string.isRequired,
+                        username: PropTypes.string.isRequired,
+                        description: PropTypes.string,
+                        image: PropTypes.shape({
+                            id: PropTypes.number.isRequired
+                        }).isRequired
+                    }).isRequired,
+                    date: PropTypes.string.isRequired,
+                    text: PropTypes.oneOfType([PropTypes.string, PropTypes.oneOf([null])]),
+                    isEdited: PropTypes.bool.isRequired,
+                    isReaded: PropTypes.bool.isRequired,
+                    media: PropTypes.arrayOf(
+                        PropTypes.shape({
+                            id: PropTypes.number.isRequired
+                        })
+                    )
                 }),
                 PropTypes.oneOf([null])
             ]),
@@ -35,7 +53,8 @@ export default function Message({ message, chatId }) {
                 })
             )
         }).isRequired,
-        chatId: PropTypes.number.isRequired
+        chatId: PropTypes.number.isRequired,
+        setReplyMessageId: PropTypes.func
     };
 
     const token = localStorage.getItem('token');
@@ -150,17 +169,14 @@ export default function Message({ message, chatId }) {
 
     useEffect(() => {
         if (!Array.isArray(media) || media.length === 0) {
-            console.log('No media to fetch.', media);
             return;
         }
 
         const fetchLinks = async () => {
-            console.log('!!!!!!!!Fetching media links...');
             try {
                 const missingMedia = media.filter(m => !mediaLink[m.id]);
 
                 if (missingMedia.length === 0 && mediaLink.length !== 0) {
-                    console.log('No media links to fetch.');
                     return;
                 }
 
@@ -171,7 +187,6 @@ export default function Message({ message, chatId }) {
                     })
                 );
 
-                console.log('Fetched media links:', responses);
                 setMediaLink(prevLinks => ({
                     ...prevLinks,
                     ...Object.fromEntries(responses.map(({ id, link }) => [id, link]))
@@ -204,6 +219,11 @@ export default function Message({ message, chatId }) {
         console.log('values', values);
     }
 
+    const handleReply = () => {
+        console.log('Replying to message: ', message);
+        setReplyMessageId(message.id);
+    };
+
     return (
         <Dropdown
             className={`p-2 rounded mb-2 ${isSender ? 'bg-primary text-white' : 'bg-light'}`}
@@ -217,6 +237,12 @@ export default function Message({ message, chatId }) {
             <Dropdown.Toggle as="div" variant="success" id="dropdown-basic">
                 <div className={`d-flex align-items-center ${isSender ? 'justify-content-end' : ''}`}>
                     <div className="d-flex flex-column" style={{ marginRight: '16px' }}>
+                        {replyMessage && (
+                            <div className='p-2 mb-2' style={{ background: 'gray', borderRadius: '8px' }}>
+                                <p className="mb-0" style={{ fontSize: '14px' }}>{replyMessage.user.username}</p>
+                                <p className="mb-0" style={{ fontSize: '12px' }}>{replyMessage.text}</p>
+                            </div>
+                        )}
                         {mediaLink && Object.values(mediaLink).map(link => (
                             <img key={link} src={link} alt="" style={{ maxWidth: '400px' }} />
                         ))}
@@ -242,7 +268,7 @@ export default function Message({ message, chatId }) {
             </Dropdown.Toggle>
 
             <Dropdown.Menu>
-                <Dropdown.Item href="#/action-1">Reply</Dropdown.Item>
+                <Dropdown.Item onClick={handleReply}>Reply</Dropdown.Item>
                 {message.user.id === userId && (
                     <>
                         <Dropdown.Item as="div" className="position-relative">
@@ -266,7 +292,7 @@ export default function Message({ message, chatId }) {
                                 }}
                             />
                         </Dropdown.Item>
-                        <Dropdown.Item href="#/action-3">Delete</Dropdown.Item>
+                        {/* <Dropdown.Item href="#/action-3">Delete</Dropdown.Item> */}
                     </>
                 )}
             </Dropdown.Menu>

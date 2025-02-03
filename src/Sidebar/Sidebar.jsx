@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import UserInfo from './UserInfo/UserInfo.jsx';
 import ContactInfo from './ContactInfo';
-import { fetchUserChats } from '../api.js';
+import { fetchUserChats, searchUsersByUsername } from '../api.js';
 import PropTypes from 'prop-types';
 import { useChatHub } from '../HubContext';
+import SearchResult from './SearchResult.jsx';
 
 export default function Sidebar({ selectedChatId, setChatId }) {
     Sidebar.propTypes = {
@@ -16,6 +17,8 @@ export default function Sidebar({ selectedChatId, setChatId }) {
     const [contacts, setContacts] = useState([]);
     const [unreadMessages, setUnreadMessages] = useState({});
     const chatHub = useChatHub();
+    const [search, setSearch] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
 
     useEffect(() => {
         if (!chatHub) {
@@ -97,14 +100,35 @@ export default function Sidebar({ selectedChatId, setChatId }) {
         fetchChats();
     }, [token]);
 
+    useEffect(() => {
+        if (search === '') {
+            return;
+        }
+
+        const fetchSearchResults = async () => {
+            try {
+                const fetchedChats = await searchUsersByUsername(search, token);
+                if (Array.isArray(fetchedChats)) {
+                    setSearchResults(fetchedChats);
+                } else {
+                    console.error('Expected an array of contacts, but got:', fetchedChats);
+                }
+            } catch (error) {
+                console.error('Error fetching search results:', error);
+            }
+        };
+
+        fetchSearchResults();
+    }, [search]);
+
     return (
         <div className="col-3 chat-sidebar custom-scrollbar">
             <div className="sidebar-header" style={{ position: 'sticky', top: '0', zIndex: '1' }}>
                 <UserInfo />
-                <input type="text" className="form-control" placeholder="Search..." />
+                <input type="text" className="form-control" placeholder="Search..." onChange={(e) => setSearch(e.target.value)}/>
             </div>
             <ul className="list-group list-group-flush">
-                {contacts.length === 0 ? (
+                {search === '' ? (contacts.length === 0 ? (
                     <p>Loading contacts...</p>
                 ) : (
                     contacts.map((contact) => (
@@ -115,7 +139,10 @@ export default function Sidebar({ selectedChatId, setChatId }) {
                             unreadMessagesCount={unreadMessages[contact.id] ? unreadMessages[contact.id].length : 0}
                         />
                     ))
-                )}
+                )
+            ) : (
+                <SearchResult />
+            )}
             </ul>
         </div>
     );

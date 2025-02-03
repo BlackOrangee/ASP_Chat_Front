@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Formik, Form, Field } from 'formik';
 import { sendMessage, fetchMessages } from '../api';
-import { message as antdMessage } from 'antd';
+import { message as antdMessage, Button } from 'antd';
 import Message from './Message';
 // import ChatHub from '../ChatHub';
 import { useChatHub } from '../HubContext';
+import { RxCross1 } from "react-icons/rx";
 
 export default function ChatArea({ chatId, setChatId }) {
     const token = localStorage.getItem('token');
@@ -14,6 +15,8 @@ export default function ChatArea({ chatId, setChatId }) {
     // const [unreadMessages, setUnreadMessages] = useState([]);
     const [scrollToBottom, setScrollToBottom] = React.useState(true);
     const messagesEndRef = React.useRef(null);
+
+    const [replyMessageId, setReplyMessageId] = useState(null);
 
     const chatHub = useChatHub();
 
@@ -37,7 +40,7 @@ export default function ChatArea({ chatId, setChatId }) {
                 setMessagesArray((prevMessages) => [...prevMessages, message]);
             }
         }
-        
+
         const readedMessage = (readedMessage, messageChatId) => {
             const messageWithChatId = parseInt(messageChatId.chatId);
             const usingChatId = parseInt(chatId);
@@ -72,7 +75,7 @@ export default function ChatArea({ chatId, setChatId }) {
         chatHub.onReceiveMessage(reciveMessage);
         chatHub.onReadedMessage(readedMessage);
         chatHub.onAttachMediaToMessage(attachFileToMessage);
-        
+
 
     }, [chatHub, chatId]);
 
@@ -210,7 +213,8 @@ export default function ChatArea({ chatId, setChatId }) {
         //     antdMessage.error('Error sending message: ' + error.message);
         // }
 
-        await chatHub.sendMessage(chatId, values.text);
+        await chatHub.sendMessage(chatId, values.text, replyMessageId);
+        setReplyMessageId(null);
         resetForm();
 
     };
@@ -255,12 +259,40 @@ export default function ChatArea({ chatId, setChatId }) {
                 })}
 
                 {messagesArray.map((message) => (
-                    <Message key={message.id + Date.now().toPrecision(3)} message={message} chatId={chatId} messageUpdateHandler={messageUpdateHandler} />
+                    <Message
+                        key={message.id + Date.now().toPrecision(3)}
+                        message={message} chatId={chatId}
+                        messageUpdateHandler={messageUpdateHandler}
+                        setReplyMessageId={setReplyMessageId}
+                    />
                 ))}
             </div>
+            {replyMessageId && <div style={{ backgroundColor: "lightgray", padding: "8px", borderRadius: "8px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <p style={{ margin: 0 }}>
+                        Reply to {messagesArray.find((message) => message.id === replyMessageId)?.user.username}
+                    </p>
 
+                    <button 
+                    style={{
+                        float: "right",
+                        clear: "both",
+                        cursor: "pointer",
+                        color: "red",
+                        backgroundColor: "lightgray",
+                        border: "none"
+                    }}
+                        onClick={() => setReplyMessageId(null)}>
+                        <RxCross1 />
+                    </button>
+                </div>
+                <p style={{ marginLeft: "10px" }}>{messagesArray.find((message) => message.id === replyMessageId)?.text}</p>
+            </div>}
             <Formik
-                initialValues={{ text: '', file: null }}
+                initialValues={{
+                    text: ''
+                    // , file: null 
+                }}
                 onSubmit={handleFormSubmit}
             >
                 {({ setFieldValue }) => (
@@ -274,13 +306,13 @@ export default function ChatArea({ chatId, setChatId }) {
                             rows="3"
                             cols="50"
                         />
-                        <input
+                        {/* <input
                             type="file"
                             name="file"
                             onChange={(event) => {
                                 setFieldValue('file', event.currentTarget.files[0]);
                             }}
-                        />
+                        /> */}
                         <button type="submit">Send</button>
                     </Form>
                 )}
