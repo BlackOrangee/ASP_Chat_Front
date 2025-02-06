@@ -64,7 +64,6 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
           cd ./chat/frontend/
-          rm -rf *
           tar -xzvf react-app.tar.gz
           rm react-app.tar.gz
           cd ..
