@@ -49,6 +49,14 @@ class ChatHub {
         }
     }
 
+    onNewChat(chat) {
+        if (!this.connection) {
+            console.error("Connection is not established.");
+            return;
+        }
+        this.connection.on("NewChat", chat);
+    }
+
     onReceiveMessage(message, chatId) {
         if (!this.connection) {
             console.error("Connection is not established.");

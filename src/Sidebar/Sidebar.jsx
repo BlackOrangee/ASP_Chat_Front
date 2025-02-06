@@ -5,6 +5,7 @@ import { fetchUserChats, searchUsersByUsername } from '../api.js';
 import PropTypes from 'prop-types';
 import { useChatHub } from '../HubContext';
 import SearchResult from './SearchResult.jsx';
+import { RxCross1 } from "react-icons/rx";
 
 export default function Sidebar({ selectedChatId, setChatId }) {
     Sidebar.propTypes = {
@@ -39,6 +40,12 @@ export default function Sidebar({ selectedChatId, setChatId }) {
         chatHub.onReadedMessage((readedMessage, chatId) => {
             console.log("Removing unread message: ", readedMessage, chatId.chatId);
             removeUnreadMessage(chatId.chatId, readedMessage.id);
+        });
+
+        chatHub.onNewChat((chat) => {
+            console.log("New chat: ", chat);
+            setContacts((prevContacts) => [...prevContacts, chat]);
+            // addUnreadMessage(chat.id, null);
         });
 
     }, [chatHub, selectedChatId]);
@@ -121,28 +128,75 @@ export default function Sidebar({ selectedChatId, setChatId }) {
         fetchSearchResults();
     }, [search]);
 
+    useEffect(() => {
+        if (search === '') {
+            setSearchResults([]);
+        }
+
+    }, [search]);
+
+    const handleClearSearch = () => setSearch('');
+
+    const contactList = contacts.length === 0 ? (
+        <p>Loading contacts...</p>
+    ) : (
+        contacts.map((contact) => (
+            <ContactInfo
+                key={contact.id}
+                contact={contact}
+                setChatId={setChatId}
+                unreadMessagesCount={unreadMessages[contact.id] ? unreadMessages[contact.id].length : 0}
+            />
+        ))
+    );
+
+    const searchResultsList = searchResults.length === 0 ? (
+        <p>Loading search results...</p>
+    ) : (
+        searchResults.map((result) => (
+            <SearchResult
+                key={result.id}
+                user={result}
+                setChatId={setChatId}
+                setSearch={setSearch}
+            />
+        ))
+    );
+
     return (
         <div className="col-3 chat-sidebar custom-scrollbar">
             <div className="sidebar-header" style={{ position: 'sticky', top: '0', zIndex: '1' }}>
                 <UserInfo />
-                <input type="text" className="form-control" placeholder="Search..." onChange={(e) => setSearch(e.target.value)}/>
+                <div style={{display: 'flex'}}>
+                    <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Search..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                    />
+                    {search !== '' && <button
+                        style={{
+                            // float: "right",
+                            // clear: "both",
+                            cursor: "pointer",
+                            color: "red",
+                            backgroundColor: "transparent",
+                            border: "none",
+                            borderRadius: "5px",
+                            marginLeft: "4px",
+                            // marginRight: "4px"
+                            position: "relative",
+                            right: "4px",
+                            // top: "10px"
+                        }}
+                        onClick={handleClearSearch}>
+                        <RxCross1 />
+                    </button>}
+                </div>
             </div>
             <ul className="list-group list-group-flush">
-                {search === '' ? (contacts.length === 0 ? (
-                    <p>Loading contacts...</p>
-                ) : (
-                    contacts.map((contact) => (
-                        <ContactInfo
-                            key={contact.id}
-                            contact={contact}
-                            setChatId={setChatId}
-                            unreadMessagesCount={unreadMessages[contact.id] ? unreadMessages[contact.id].length : 0}
-                        />
-                    ))
-                )
-            ) : (
-                <SearchResult />
-            )}
+                {search === '' ? contactList : searchResultsList}
             </ul>
         </div>
     );

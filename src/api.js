@@ -46,6 +46,10 @@ export const fetchRequestCombined = async (endpoint, method = 'GET', token = nul
     }
 };
 
+export const createChat = async (formData, token) => {
+    return fetchRequestCombined('/Chat', 'POST', token, formData);
+}
+
 export const attachFileToMessage = async (formData, token) => {
     return fetchRequestCombined('/Message/Media', 'POST', token, formData);
 }

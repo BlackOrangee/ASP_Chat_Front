@@ -21,9 +21,18 @@ export default function ChatArea({ chatId, setChatId }) {
     const chatHub = useChatHub();
 
     ChatArea.propTypes = {
-        chatId: PropTypes.number.isRequired,
+        chatId: PropTypes.number,
         setChatId: PropTypes.func.isRequired,
     };
+
+    useEffect(() => {
+        if (chatId){
+            return;
+        }
+        setMessagesArray([]);
+        setLastMessageId(null);
+        setReplyMessageId(null);
+    }, [chatId]);
 
     useEffect(() => {
         if (!chatHub) {
@@ -239,7 +248,7 @@ export default function ChatArea({ chatId, setChatId }) {
                 behavior: 'smooth',
             });
         }
-    }, [chatId]);
+    }, [chatId, messagesArray]);
 
     return (
         <div className="col-6 chat-messages">

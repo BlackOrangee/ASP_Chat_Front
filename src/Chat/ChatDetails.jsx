@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { fetchChatById, fetchMediaLink, FetchAndStoreImage, LoadImageFromLocalStorage } from '../api';
 import PropTypes from 'prop-types';
+import { RxCross1 } from "react-icons/rx";
 
 const ChatDetails = ({ chatId, setChatId }) => {
     const token = localStorage.getItem('token');
@@ -21,7 +22,7 @@ const ChatDetails = ({ chatId, setChatId }) => {
         });
 
     ChatDetails.propTypes = {
-        chatId: PropTypes.number.isRequired,
+        chatId: PropTypes.number,
         setChatId: PropTypes.func.isRequired,
     };
 
@@ -145,15 +146,36 @@ const ChatDetails = ({ chatId, setChatId }) => {
     return (
         <div className="col-3 chat-details">
             <div className="d-flex align-items-center p-3">
-                {/* {(chatImage || defaultImageUrl) && ( */}
+                {chatId && (
                     <img
                         className="rounded-circle"
                         style={{ width: '60px', height: '60px' }}
                         src={defaultImageUrl}
                         alt="User"
                     />
-                {/* )} */}
+                )}
                 <h5 className="p-3 border-bottom">{chatObject.name}</h5>
+                {chatId && <button
+                    style={{
+                        float: "right",
+                        clear: "both",
+                        cursor: "pointer",
+                        color: "red",
+                        backgroundColor: "transparent",
+                        border: "none",
+                        borderRadius: "5px",
+                        marginLeft: "4px",
+                        // marginRight: "4px"
+                        // position: "relative",
+                        // right: "-60px",
+                        // top: "-30px"
+                    }}
+                    onClick={() => {
+                        setChatId(null);
+                        setChatObject({});
+                    }}>
+                    <RxCross1 />
+                </button>}
             </div>
             {chatObject.chatType && <p className="p-3 border-bottom">{chatObject.chatType}</p>}
             {chatObject.tag && <p className="p-3 border-bottom">{'@' + chatObject.tag}</p>}
