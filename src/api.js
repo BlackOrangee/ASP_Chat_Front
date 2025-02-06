@@ -1,5 +1,6 @@
 import { message } from "antd";
-const API_URL = 'http://localhost:5005';
+const HOST = process.env.REACT_APP_API_URL;
+const API_URL = `http://${HOST}`;
 const API_VERSION = '/api/v1';
 
 export const fetchRequestCombined = async (endpoint, method = 'GET', token = null, body = null, 

@@ -4,7 +4,8 @@ import Body from './Chat/Body';
 import { HubProvider } from './HubContext';
 
 const App = () => {
-    const hubUrl = 'http://localhost:5005/chatHub';
+    const API_URL = process.env.REACT_APP_API_URL;
+    const hubUrl = `http://${API_URL}/chatHub`;
     const token = localStorage.getItem('token');
     return (
         <HubProvider hubUrl={hubUrl} accessToken={token}>
