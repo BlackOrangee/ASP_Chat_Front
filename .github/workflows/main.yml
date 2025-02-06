@@ -1,0 +1,73 @@
+name: Build and Copy React App to Server
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build the project
+        run: CI=false npm run build
+
+      - name: Copy Dockerfile
+        run: cp ./Dockerfile ./build
+
+      - name: Create .env file
+        run: |
+          echo -e "REACT_APP_API_URL=${{ secrets.REACT_APP_API_URL }}" >> ./build/.env
+
+      - name: Archive the output
+        run: tar -czvf react-app.tar.gz -C ./build .
+        
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: react-app-artifact
+          path: react-app.tar.gz
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: react-app-artifact
+          path: ./app
+
+      - name: Setup SSH agent and add private key
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Copy artifact to server via SCP
+        run: scp -o StrictHostKeyChecking=no ./app/react-app.tar.gz ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:./chat/frontend/react-app.tar.gz
+
+      - name: SSH into server and extract
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+          cd ./chat/frontend/
+          rm -rf *
+          tar -xzvf react-app.tar.gz
+          rm react-app.tar.gz
+          cd ..
+          docker-compose down
+          docker-compose up -d --build  
+          EOF
