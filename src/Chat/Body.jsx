@@ -25,7 +25,7 @@ export default function Body() {
         <>
             {isAuthorized ?
                 <div className="container-fluid chat-container">
-                    <Sidebar setChatId={setChatId}/>
+                    <Sidebar selectedChatId={chatId} setChatId={setChatId}/>
                     <ChatArea chatId={chatId} setChatId={setChatId}/>
                     <ChatDetails chatId={chatId} setChatId={setChatId}/>
                 </div>

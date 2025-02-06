@@ -46,6 +46,14 @@ export const fetchRequestCombined = async (endpoint, method = 'GET', token = nul
     }
 };
 
+export const createChat = async (formData, token) => {
+    return fetchRequestCombined('/Chat', 'POST', token, formData);
+}
+
+export const attachFileToMessage = async (formData, token) => {
+    return fetchRequestCombined('/Message/Media', 'POST', token, formData);
+}
+
 export const registerRequest = async (values) => {
     return fetchRequestCombined('/Register', 'POST', null, values, '/Auth');
 }
@@ -96,6 +104,10 @@ export const fetchMediaLink = async (id, token) => {
 
 export const fetchProfile = async (id, token) => {
     return fetchRequestCombined('/User/' + id, 'GET', token);
+};
+
+export const searchUsersByUsername = async (username, token) => {
+    return fetchRequestCombined(`/User/?username=${username}`, 'GET', token);
 };
 
 export const FetchAndStoreImage = async (url, userId, userImageId) => {
