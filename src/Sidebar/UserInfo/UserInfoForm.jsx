@@ -38,7 +38,7 @@ const UserInfoForm = ({
     const ValidationSchema = Yup.object().shape({
         name: Yup.string().min(4).max(20),
         userName: Yup.string().min(4).max(15),
-        description: Yup.string().min(4).max(100),
+        description: Yup.string().max(100),
     });
 
     const handleFormSubmit = async (values, { resetForm }) => {
@@ -92,6 +92,7 @@ const UserInfoForm = ({
             }
 
             resetForm();
+            message.success('Profile updated successfully!');
         } catch (error) {
             message.error('Error sending message: ' + error.message);
         }
@@ -105,10 +106,11 @@ const UserInfoForm = ({
                 validationSchema={ValidationSchema}
             >
                 {({ setFieldValue }) => (
-                    <Form>
+                    <Form style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <div className='d-flex align-items-center justify-content-center'>
                             <p className='m-0'>Full Name</p>
                             <Field
+                                style={{ marginLeft: '10px', borderRadius: '6px' }}
                                 name="name"
                                 type="text"
                                 placeholder={name}
@@ -121,6 +123,7 @@ const UserInfoForm = ({
                         <div className='d-flex align-items-center justify-content-center'>
                             <p className='m-0'>Username</p>
                             <Field
+                                style={{ marginLeft: '10px', borderRadius: '6px' }}
                                 name="userName"
                                 type="text"
                                 placeholder={username}
@@ -133,6 +136,10 @@ const UserInfoForm = ({
                         <div className='d-flex align-items-center justify-content-center'>
                             <p className='m-0'>Description</p>
                             <Field
+                                style={{ 
+                                    marginLeft: '10px', 
+                                    borderRadius: '6px' 
+                                }}
                                 name="description"
                                 type="text"
                                 placeholder={description}
@@ -142,7 +149,8 @@ const UserInfoForm = ({
                                 component="div"
                             />
                         </div>
-                        <input
+                        <input 
+                            style={{marginLeft: '28%'}}
                             type="file"
                             name="file"
                             onChange={(event) => {
@@ -150,7 +158,12 @@ const UserInfoForm = ({
                             }}
                         />
                         <div className='d-flex align-items-center justify-content-center'>
-                            <button type="submit" >
+                            <button type="submit"
+                                style={{  
+                                    marginBottom: '10px', 
+                                    borderRadius: '8px' 
+                                }}
+                            >
                                 Submit
                             </button>
                         </div>

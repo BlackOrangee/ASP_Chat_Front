@@ -1,5 +1,5 @@
 import { Modal } from 'antd';
-import React, {  useState } from 'react';
+import React, { useState } from 'react';
 import UserInfoForm from './UserInfoForm';
 import PropTypes from 'prop-types';
 import ChangePassForm from './ChangePassForm';
@@ -43,15 +43,24 @@ const UserModal = ({ isModalOpen, setIsModalOpen, imageUrl,
                 alignItems: 'center',
                 justifyContent: 'space-between'
             }}>
-                <nav style={{}}>
+                <nav style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    marginLeft: '8px',
+                    gap: '10px'
+                }}>
                     <li>
-                        <button onClick={() => setMenuChoice(1)}>
-                            edit
+                        <button onClick={() => setMenuChoice(1)}
+                            style={{ borderRadius: '8px' }}
+                        >
+                            Edit
                         </button>
                     </li>
                     <li>
-                        <button onClick={() => setMenuChoice(2)}>
-                            2
+                        <button onClick={() => setMenuChoice(2)}
+                            style={{ borderRadius: '8px' }}
+                        >
+                            Change password
                         </button>
                     </li>
                 </nav>
@@ -106,7 +115,7 @@ const UserModal = ({ isModalOpen, setIsModalOpen, imageUrl,
             {menuChoice === 2 && (
                 <div>
                     <h2>Menu 2</h2>
-                    <ChangePassForm username={username}/>
+                    <ChangePassForm username={username} />
                 </div>
             )}
             {menuChoice === 3 && (

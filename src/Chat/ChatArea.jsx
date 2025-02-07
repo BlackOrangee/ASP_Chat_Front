@@ -26,7 +26,7 @@ export default function ChatArea({ chatId, setChatId }) {
     };
 
     useEffect(() => {
-        if (chatId){
+        if (chatId) {
             return;
         }
         setMessagesArray([]);
@@ -282,15 +282,15 @@ export default function ChatArea({ chatId, setChatId }) {
                         Reply to {messagesArray.find((message) => message.id === replyMessageId)?.user.username}
                     </p>
 
-                    <button 
-                    style={{
-                        float: "right",
-                        clear: "both",
-                        cursor: "pointer",
-                        color: "red",
-                        backgroundColor: "lightgray",
-                        border: "none"
-                    }}
+                    <button
+                        style={{
+                            float: "right",
+                            clear: "both",
+                            cursor: "pointer",
+                            color: "red",
+                            backgroundColor: "lightgray",
+                            border: "none"
+                        }}
                         onClick={() => setReplyMessageId(null)}>
                         <RxCross1 />
                     </button>
@@ -322,7 +322,15 @@ export default function ChatArea({ chatId, setChatId }) {
                                 setFieldValue('file', event.currentTarget.files[0]);
                             }}
                         /> */}
-                        <button type="submit">Send</button>
+                        <button type="submit"
+                            style={{
+                                borderRadius: "8px",
+                                marginTop: "4px",
+                                marginLeft: "4px",
+                                marginBottom: "4px"
+                            }}>
+                            Send
+                        </button>
                     </Form>
                 )}
             </Formik>

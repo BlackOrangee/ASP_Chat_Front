@@ -53,7 +53,7 @@ export default function Message({ message, chatId, setReplyMessageId }) {
                 })
             )
         }).isRequired,
-        chatId: PropTypes.number.isRequired,
+        chatId: PropTypes.number,
         setReplyMessageId: PropTypes.func
     };
 

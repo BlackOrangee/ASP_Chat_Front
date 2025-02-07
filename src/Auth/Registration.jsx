@@ -11,18 +11,6 @@ const initialValues = {
     password: '',
 };
 
-const submitHandler = async (values, formikBag) => {
-    try {
-        await registerRequest(values);
-    } catch (error) {
-        console.error('Registration error:', error);
-        alert('An error occurred. Please try again.');
-    }
-    formikBag.resetForm();
-
-    formikBag.setSubmitting(false);
-};
-
 const RegistrationSchema = Yup.object().shape({
     name: Yup.string()
         .min(2, 'Name is too short')
@@ -45,6 +33,19 @@ const Registration = ({ toggleForm }) => {
         toggleForm: PropTypes.func
     }
     
+    const submitHandler = async (values, formikBag) => {
+        try {
+            await registerRequest(values);
+            toggleForm();
+        } catch (error) {
+            console.error('Registration error:', error);
+            alert('An error occurred. Please try again.');
+        }
+        formikBag.resetForm();
+    
+        formikBag.setSubmitting(false);
+    };
+
     return (
         <div className={styles.registrationForm}>
             <h2>Registration</h2>
